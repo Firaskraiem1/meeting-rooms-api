@@ -30,3 +30,10 @@ class BookingOut(BaseModel):
     start: datetime
     end: datetime
     status: Literal["booked", "cancelled"]
+
+class BookingPage(BaseModel):
+    """A page of bookings with the total number of matches."""
+    items: list[BookingOut]
+    total: int
+    limit: int
+    offset: int
