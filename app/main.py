@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from .errors import register_error_handlers
+
 from .db import connect, init_db
 from .routes import router
 
@@ -19,7 +21,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Meeting rooms", lifespan=lifespan)
 app.include_router(router)
-
+register_error_handlers(app)
 
 @app.get("/health")
 def health():
