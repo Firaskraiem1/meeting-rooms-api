@@ -110,3 +110,38 @@ def test_day_list_is_ordered_paginated_and_hides_cancelled(client):
                       params={"date": "2026-12-01", "limit": 1, "offset": 1}).json()
     assert [b["start"][11:16] for b in page["items"]] == ["14:00"]
     assert page["total"] == 2
+
+def test_organiser_cannot_book_two_rooms_at_the_same_time(client):
+    assert book(client, 9, 0, 10, 0, room=1).status_code == 201
+    response = book(client, 9, 30, 10, 30, room=2)   # same organiser, other room
+    assert response.status_code == 409
+    assert response.json()["error"] == "organiser_busy"
+
+
+def test_organiser_can_book_two_rooms_back_to_back(client):
+    assert book(client, 9, 0, 10, 0, room=1).status_code == 201
+    assert book(client, 10, 0, 11, 0, room=2).status_code == 201
+
+
+def test_different_organisers_can_book_different_rooms_at_the_same_time(client):
+    assert book(client, 9, 0, 10, 0, room=1).status_code == 201
+    assert book(client, 9, 0, 10, 0, room=2, organiser="b@x.com").status_code == 201
+
+
+def test_cancelling_frees_the_organiser(client):
+    first = book(client, 9, 0, 10, 0, room=1).json()["id"]
+    client.delete(f"/bookings/{first}", params={"organiser": "a@x.com"})
+    assert book(client, 9, 0, 10, 0, room=2).status_code == 201
+
+def test_cancelling_twice_returns_409(client):
+    booking_id = book(client, 9, 0, 10, 0).json()["id"]
+    client.delete(f"/bookings/{booking_id}", params={"organiser": "a@x.com"})
+    response = client.delete(f"/bookings/{booking_id}", params={"organiser": "a@x.com"})
+    assert response.status_code == 409
+    assert response.json()["error"] == "already_cancelled"
+
+
+def test_cancelling_unknown_booking_returns_404(client):
+    response = client.delete("/bookings/999", params={"organiser": "a@x.com"})
+    assert response.status_code == 404
+    assert response.json()["error"] == "booking_not_found"

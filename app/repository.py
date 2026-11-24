@@ -140,3 +140,18 @@ class Repository:
         data["start"] = self.from_db(data.pop("start_utc"))
         data["end"] = self.from_db(data.pop("end_utc"))
         return data
+    
+    def organiser_has_overlap(self, organiser: str, start: datetime, end: datetime) -> bool:
+        """True if this organiser already has a booked slot overlapping [start, end),
+        in any room.
+
+        Same logic as has_overlap but per organiser instead of per room.
+        Touching slots (end == start) do not overlap. Cancelled bookings are ignored.
+        """
+        row = self.conn.execute(
+            "SELECT 1 FROM bookings "
+            "WHERE organiser = ? AND status = ? AND start_utc < ? AND end_utc > ? "
+            "LIMIT 1",
+            (organiser, BOOKED, self.to_db(end), self.to_db(start)),
+        ).fetchone()
+        return row is not None

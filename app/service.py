@@ -17,6 +17,7 @@ class BookingService:
     - "Active" booking = status `booked` (not cancelled), finished or not.
     - Only the organiser (e-mail, case-insensitive) can cancel a booking.
     - A booking cannot start in the past and must fit within one local day.
+    - An organiser cannot hold two overlapping bookings, even in different rooms.
     """
 
     def __init__(self, repo, tz: str = TIMEZONE, clock=None):
@@ -88,6 +89,9 @@ class BookingService:
             if self.repo.has_overlap(room_id, start, end):
                 raise Conflict("overlap",
                                "This room is already booked for that time.")
+            if self.repo.organiser_has_overlap(organiser, start, end):
+                raise Conflict("organiser_busy",
+                               "This organiser already has a booking at that time.")
 
             day_start, day_end = self._local_day_bounds(local_start.date())
             if self.repo.count_booked(organiser, day_start, day_end) >= MAX_PER_DAY:

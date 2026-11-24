@@ -14,9 +14,26 @@ class RoomOut(BaseModel):
 
 class BookingIn(BaseModel):
     """What a client sends to create a booking."""
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "room_id": 1,
+                    "start": "2027-03-02T09:00:00+01:00",
+                    "end": "2027-03-02T10:00:00+01:00",
+                    "organiser": "xy@example.com",
+                    "subject": "Sprint planning",
+                }
+            ]
+        }
+    }
+
     room_id: int
-    start: datetime = Field(description="ISO 8601 with UTC offset, e.g. 2026-12-01T09:00:00+01:00")
-    end: datetime = Field(description="ISO 8601 with UTC offset")
+    start: datetime = Field(
+        description="ISO 8601 with UTC offset. Use +01:00 (Tunis)")
+    end: datetime = Field(
+        description="ISO 8601 with UTC offset. Use +01:00 (Tunis)")
     organiser: str = Field(min_length=3, max_length=254, description="Organiser e-mail")
     subject: str = Field(min_length=1, max_length=200)
 

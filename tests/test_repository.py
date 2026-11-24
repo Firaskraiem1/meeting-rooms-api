@@ -29,7 +29,7 @@ def test_cancelled_booking_does_not_block_the_room(tmp_path):
     booking = repo.insert(1, utc(9), utc(10), "a@x.com", "first", now)
     repo.mark_cancelled(booking["id"], now)
     assert repo.has_overlap(1, utc(9), utc(10)) is False
-    
+
 def test_count_booked_counts_only_this_organiser_and_day(tmp_path):
     repo = make_repo(tmp_path)
     now = utc(0)
@@ -48,3 +48,12 @@ def test_count_booked_counts_only_this_organiser_and_day(tmp_path):
 
     repo.mark_cancelled(first["id"], now)
     assert repo.count_booked("a@x.com", day_start, day_end) == 2
+
+def test_organiser_overlap_spans_all_rooms(tmp_path):
+    repo = make_repo(tmp_path)
+    now = utc(0)
+    repo.insert(1, utc(9), utc(10), "a@x.com", "first", now)
+    assert repo.organiser_has_overlap("a@x.com", utc(9, 30), utc(10, 30)) is True
+    assert repo.organiser_has_overlap("a@x.com", utc(10), utc(11)) is False   # touching
+    assert repo.organiser_has_overlap("b@x.com", utc(9, 30), utc(10, 30)) is False
+
