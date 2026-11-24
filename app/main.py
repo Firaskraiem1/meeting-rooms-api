@@ -4,18 +4,21 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .db import connect, init_db
+from .routes import router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Prepare the database once, when the server starts."""
+    """Open the database once at startup and close it at shutdown."""
     conn = connect()
     init_db(conn)
-    conn.close()
+    app.state.conn = conn
     yield
+    conn.close()
 
 
 app = FastAPI(title="Meeting rooms", lifespan=lifespan)
+app.include_router(router)
 
 
 @app.get("/health")
