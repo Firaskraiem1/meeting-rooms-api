@@ -47,6 +47,7 @@ class BookingOut(BaseModel):
     start: datetime
     end: datetime
     status: Literal["booked", "cancelled"]
+    time_state: Literal["upcoming", "ongoing", "past"] | None = None
 
 class BookingPage(BaseModel):
     """A page of bookings with the total number of matches."""

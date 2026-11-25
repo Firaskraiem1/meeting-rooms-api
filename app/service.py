@@ -28,11 +28,22 @@ class BookingService:
 
     # ---------- helpers ----------
 
+    def _time_state(self, booking: dict, now: datetime) -> str | None:
+        """Derive past / ongoing / upcoming from the clock. Never stored."""
+        if booking["status"] == CANCELLED:
+            return None
+        if now < booking["start"]:
+            return "upcoming"
+        if now < booking["end"]:
+            return "ongoing"
+        return "past"
+    
     def _present(self, booking: dict) -> dict:
-        """Return the booking with start/end expressed in office time."""
+        """Return the booking with office-time datetimes and its time state."""
         return {**booking,
                 "start": booking["start"].astimezone(self.tz),
-                "end": booking["end"].astimezone(self.tz)}
+                "end": booking["end"].astimezone(self.tz),
+                "time_state": self._time_state(booking, self.clock())}
 
     def _local_day_bounds(self, day: date) -> tuple[datetime, datetime]:
         """Return [00:00, next 00:00) of a local day as aware datetimes."""
